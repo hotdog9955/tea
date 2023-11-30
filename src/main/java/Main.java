@@ -20,25 +20,25 @@ public class Main {
 
         TeaScreenFunctions teaScreenFunctions = new TeaScreenFunctions();
         InetSocketAddress ip = teaScreenFunctions.splashAndPrompt(screen, tg );
-        Socket socket = new Socket();
-        socket.setSoTimeout(5000);
-        attemptConnection(socket, ip, teaScreenFunctions, tg, screen);
+        Socket _socket = attemptConnection(ip, teaScreenFunctions, tg, screen);
 
     }
 
-    private static void attemptConnection(Socket socket, InetSocketAddress ip, TeaScreenFunctions teaScreenFunctions, TextGraphics tg, Screen screen) throws IOException {
+    private static Socket attemptConnection(InetSocketAddress ip, TeaScreenFunctions teaScreenFunctions, TextGraphics tg, Screen screen) throws IOException {
+
         while(true){
             try{
-                System.out.println("attempting????");
-                socket.connect(ip,5000);
+                Socket socket = new Socket();
+                socket.setSoTimeout(5000);
+                socket.connect(ip,80);
                 teaScreenFunctions.clearRow(tg, teaScreenFunctions.logo.length+4);
                 teaScreenFunctions.putStringCenter(tg, teaScreenFunctions.logo.length+4, "connection successful!");
                 screen.refresh();
-                break;
+                return socket;
             }catch (IOException e) {
-                ip = teaScreenFunctions.getInetAddress(screen, tg);
                 teaScreenFunctions.clearRow(tg, teaScreenFunctions.logo.length+4);
                 teaScreenFunctions.putStringCenter(tg, teaScreenFunctions.logo.length+4, "connection failed, please try again.");
+                ip = teaScreenFunctions.getInetAddress(screen, tg);
                 screen.refresh();
             }
         }

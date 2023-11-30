@@ -43,7 +43,7 @@ public class TeaScreenFunctions {
     }
 
     // displays the splash screen and prompts the user to enter an IP
-    public InetSocketAddress splashAndPrompt(Screen screen, TextGraphics tg) throws IOException, InterruptedException {
+    public InetSocketAddress splashAndPrompt(Screen screen, TextGraphics tg) throws IOException {
         int i = 0;
 
         logoSplash(screen, tg, i);
@@ -56,7 +56,7 @@ public class TeaScreenFunctions {
         // String to store input
         int width = tg.getSize().getColumns();
         StringBuilder ip = new StringBuilder();
-
+        clearRow(tg, logo.length+5);
         // Reading input
         KeyStroke keyStroke;
         InetSocketAddress finalIp;
@@ -84,6 +84,7 @@ public class TeaScreenFunctions {
                 } catch (UnknownHostException e) {
                     clearRow(tg, logo.length+4);
                     putStringCenter(tg, logo.length+4, "Invalid IP address found, please try again.");
+                    screen.refresh();
                     continue;
                 }
                 break;
@@ -93,12 +94,11 @@ public class TeaScreenFunctions {
     }
 
     // displays the tea logo
-    private void logoSplash(Screen screen, TextGraphics tg, int i) throws IOException, InterruptedException {
+    private void logoSplash(Screen screen, TextGraphics tg, int i) throws IOException {
         for (String v : logo){
             i++;
             putStringCenter(tg, i, v);
             screen.refresh();
-            Thread.sleep(75);
         }
 
         String welcomeMessage = "Welcome to Tea!";
