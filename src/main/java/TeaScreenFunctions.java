@@ -1,19 +1,15 @@
-import com.googlecode.lanterna.TerminalSize;
-import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
-import com.googlecode.lanterna.gui2.*;
 
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 
 public class TeaScreenFunctions {
-    private String[] logo = {
+    public final String[] logo = {
             "                 =                      ",
             "                 ++                     ",
             "                  ++*+                  ",
@@ -33,10 +29,12 @@ public class TeaScreenFunctions {
     };
 
 
+    // puts a string in the center of the screen
     public void putStringCenter(TextGraphics tg, int row,String message){
         tg.putString((tg.getSize().getColumns()/2) - (message.length()/2), row, message );
     }
 
+    // clears all characters in a row
     public void clearRow(TextGraphics tg, int row){
 
         for (int col = 0; col < tg.getSize().getColumns(); col++) {
@@ -44,13 +42,58 @@ public class TeaScreenFunctions {
         }
     }
 
-    // takes in text graphics and integer (where it is width wise
-    public InetAddress displaySplash(Screen screen, TextGraphics tg) throws IOException, InterruptedException {
+    // displays the splash screen and prompts the user to enter an IP
+    public InetSocketAddress splashAndPrompt(Screen screen, TextGraphics tg) throws IOException, InterruptedException {
         int i = 0;
-        TerminalSize size = screen.getTerminalSize();
-        int width = size.getColumns();
-        int height = size.getRows();
 
+        logoSplash(screen, tg, i);
+
+        return getInetAddress(screen, tg);
+    }
+
+    // prompts the user to input an IP
+    public InetSocketAddress getInetAddress(Screen screen, TextGraphics tg) throws IOException {
+        // String to store input
+        int width = tg.getSize().getColumns();
+        StringBuilder ip = new StringBuilder();
+
+        // Reading input
+        KeyStroke keyStroke;
+        InetSocketAddress finalIp;
+        do {
+            screen.refresh();
+            keyStroke = screen.pollInput();
+
+            if (keyStroke == null) {
+                continue;
+            }
+            if ((keyStroke.getKeyType() == KeyType.Character) && (ip.length() < width)) {
+                ip.append(keyStroke.getCharacter());
+            } else if (keyStroke.getKeyType() == KeyType.Backspace && !ip.isEmpty()) {
+                ip.deleteCharAt(ip.length()-1);
+            }
+            clearRow(tg,logo.length+5);
+            putStringCenter(tg, logo.length+5, ip.toString());
+
+            if (keyStroke.getKeyType() == KeyType.Enter){
+                try{
+                    finalIp = new InetSocketAddress(ip.toString(),80);
+                    clearRow(tg, logo.length+4);
+                    putStringCenter(tg, logo.length+4, "Valid IP found, Connecting...");
+                    screen.refresh();
+                } catch (UnknownHostException e) {
+                    clearRow(tg, logo.length+4);
+                    putStringCenter(tg, logo.length+4, "Invalid IP address found, please try again.");
+                    continue;
+                }
+                break;
+            }
+        } while (true);
+        return finalIp;
+    }
+
+    // displays the tea logo
+    private void logoSplash(Screen screen, TextGraphics tg, int i) throws IOException, InterruptedException {
         for (String v : logo){
             i++;
             putStringCenter(tg, i, v);
@@ -63,43 +106,5 @@ public class TeaScreenFunctions {
 
         String prompt = "Type a server IP to get started.";
         putStringCenter(tg, logo.length+4, prompt);
-
-        // String to store input
-        StringBuilder ip = new StringBuilder();
-
-        // Reading input
-        KeyStroke keyStroke = null;
-        InetAddress finalIp;
-        do {
-            screen.refresh();
-            keyStroke = screen.pollInput();
-
-            if (keyStroke == null) {
-                continue;
-            }
-            if ((keyStroke.getKeyType() == KeyType.Character) && (ip.length() < 15)) {
-                ip.append(keyStroke.getCharacter());
-            } else if (keyStroke.getKeyType() == KeyType.Backspace && !ip.isEmpty()) {
-                ip.deleteCharAt(ip.length()-1);
-            }
-            clearRow(tg,logo.length+5);
-            putStringCenter(tg, logo.length+5, ip.toString());
-
-            if (keyStroke.getKeyType() == KeyType.Enter){
-                try{
-                    finalIp = InetAddress.getByName(ip.toString());
-                    clearRow(tg, logo.length+4);
-                    putStringCenter(tg, logo.length+4, "Valid IP found, Connecting...");
-                    screen.refresh();
-                } catch (UnknownHostException e) {
-                    clearRow(tg, logo.length+4);
-                    putStringCenter(tg, logo.length+4, "Invalid IP address found, please try again.");
-                    continue;
-                }
-                break;
-            }
-        } while (true);
-
-        return finalIp;
     }
 }
