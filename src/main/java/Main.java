@@ -20,7 +20,9 @@ public class Main {
 
         TeaScreenFunctions teaScreenFunctions = new TeaScreenFunctions();
         InetSocketAddress ip = teaScreenFunctions.splashAndPrompt(screen, tg );
-        Socket _socket = attemptConnection(ip, teaScreenFunctions, tg, screen);
+        Socket socket = attemptConnection(ip, teaScreenFunctions, tg, screen);
+        teaScreenFunctions.chatRoom(screen,tg,socket);
+
 
     }
 
@@ -29,8 +31,7 @@ public class Main {
         while(true){
             try{
                 Socket socket = new Socket();
-                socket.setSoTimeout(5000);
-                socket.connect(ip,80);
+                socket.connect(ip,2000);
                 teaScreenFunctions.clearRow(tg, teaScreenFunctions.logo.length+4);
                 teaScreenFunctions.putStringCenter(tg, teaScreenFunctions.logo.length+4, "connection successful!");
                 screen.refresh();

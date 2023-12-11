@@ -3,12 +3,12 @@ import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
+import java.io.*;
+import java.net.*;
+import java.util.Arrays;
 
 
-public class TeaScreenFunctions {
+public class TeaScreenFunctions{
     public final String[] logo = {
             "                 =                      ",
             "                 ++                     ",
@@ -77,7 +77,7 @@ public class TeaScreenFunctions {
 
             if (keyStroke.getKeyType() == KeyType.Enter){
                 try{
-                    finalIp = new InetSocketAddress(ip.toString(),80);
+                    finalIp = new InetSocketAddress(ip.toString(),23788);
                     clearRow(tg, logo.length+4);
                     putStringCenter(tg, logo.length+4, "Valid IP found, Connecting...");
                     screen.refresh();
@@ -93,6 +93,19 @@ public class TeaScreenFunctions {
         return finalIp;
     }
 
+    public void rotateMessages(String[] array, String newString){
+        if (array == null || array.length == 0) {
+            System.out.println("Array is empty or null.");
+            return;
+        }
+
+        for (int i = array.length - 1; i > 0; i--) {
+            array[i] = array[i - 1];
+        }
+
+        array[0] = newString;
+    }
+
     // displays the tea logo
     private void logoSplash(Screen screen, TextGraphics tg, int i) throws IOException {
         for (String v : logo){
@@ -106,5 +119,55 @@ public class TeaScreenFunctions {
 
         String prompt = "Type a server IP to get started.";
         putStringCenter(tg, logo.length+4, prompt);
+    }
+
+    public void chatRoom(Screen screen, TextGraphics tg, Socket socket) throws IOException {
+
+        BufferedWriter bufWrite = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        BufferedReader bufRead = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        String userNum = bufRead.readLine();
+        System.out.println(userNum);
+        String[] messages = new String[23];
+        Arrays.fill(messages, "");
+        int width = tg.getSize().getColumns();
+        int height = tg.getSize().getRows();
+
+        screen.clear();
+
+        screen.refresh();
+        KeyStroke keyStroke;
+
+        StringBuilder message = new StringBuilder();
+        do {
+            screen.refresh();
+            keyStroke = screen.pollInput();
+
+            if (bufRead.ready()){
+                System.out.println("MESSAGE READY!");
+                rotateMessages(messages,bufRead.readLine());
+                for(int i = 0; i < messages.length; i++){
+                    clearRow(tg, i);
+                    putStringCenter(tg, i, messages[i]);
+                    screen.refresh();
+                }
+            }
+
+            if (keyStroke == null) {
+                continue;
+            }
+            if ((keyStroke.getKeyType() == KeyType.Character) && (message.length() < width)) {
+                message.append(keyStroke.getCharacter());
+            } else if (keyStroke.getKeyType() == KeyType.Backspace && !message.isEmpty()) {
+                message.deleteCharAt(message.length()-1);
+
+            } else if ((keyStroke.getKeyType() == KeyType.Enter) && (!(message.toString().isEmpty()))){
+                System.out.println(message);
+                bufWrite.write(message + "\n");
+                bufWrite.flush();
+            }
+
+            clearRow(tg,height-1);
+            putStringCenter(tg, height-1, message.toString());
+        }while(true);
     }
 }
